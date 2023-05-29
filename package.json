@@ -1,0 +1,18 @@
+{
+  "name": "labler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --max-old-space-size=1500 index.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chatgpt": "^5.2.4",
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  }
+}
