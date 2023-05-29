@@ -201,23 +201,35 @@ var counter = 0;
 console.log("ALREADY DONE: " + labels.length + " / " + data.length)
 
 // sends instruction, saves history to item.id key, history is array of responses
-async function do_one_item(item) {
+async function do_one_item(item, history) {
 
     // check if history has item.id key
     if (history[item.id]) {
         console.log("SKIPPING: " + item.id);
-        return null;
+        return {
+            res: null,
+            hist: history,
+            e: "Already done"
+        };
     }
 
     // if media is true and text is less than 35, skip
     if (item.media && item.rawContent.length < 55) {
         console.log("SKIPPING: " + item.id);
-        return null;
+        return {
+            res: null,
+            hist: history,
+            e: "Media and text less than 35"
+        };
     }
 
-    let instructionUqn = await send_instruction();
+
+    // send instruction
+    var instructionUqn = await send_instruction();
 
     console.log("SENT INSTRUCTION: ", instructionUqn);
+
+
 
 
     let hist = [{ "role": "user", "data": instruction }, instructionUqn];
@@ -237,6 +249,7 @@ async function do_one_item(item) {
 
         let lastAssistant = hist.filter(item => item.role == "assistant")
         lastAssistant = lastAssistant[lastAssistant.length - 1]
+
 
         let res = await sendQuery(sendingItem, lastAssistant);
 
@@ -267,17 +280,23 @@ async function do_one_item(item) {
 
 
             if (saveCnt > 1) {
-                return res;
+                // save history to file
+                fs.writeFileSync(historyPath, JSON.stringify(history));
+                console.log("SAVED HISTORY");
+                return { res, hist: history, e: null };
 
             }
 
             sendingItem = revaluatePrompt
             continue;
-
-
-            return res;
         }
         catch (e) {
+            // if status is 400, then it is an error
+            if (e.status == 400) {
+
+                console.log("ERROR: ", res);
+                return { res, hist: history, e }
+            }
             console.error(e);
             sendingItem = "Not a valid json, only output json. IMPORTANT only output json with no other text";
         }
