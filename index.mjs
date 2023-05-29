@@ -35,6 +35,36 @@ let isTaskRunning = false;
 io.on('connection', (socket) => {
     console.log('A client connected');
 
+    socket.on('sendManualInstruction', (message) => {
+        console.log('Manual instruction received', message);
+        // Implement your logic to handle the custom message
+
+        try {
+            const { tweetId, manualInstruction } = message;
+
+            // find the last prompt of the tweet
+            const lastPrompt = history[tweetId].history[history[tweetId].history.length - 1];
+            // add to queue
+            promptQueue.push({
+                'type': 'manual',
+                'tweetId': tweetId,
+                'lastPrompt': lastPrompt,
+                'manualInstruction': manualInstruction
+            })
+
+            // send status to client that it is added to queue
+            socket.emit('manualInstructionStatus', {
+                'status': 'added to queue'
+            });
+
+        }
+        catch (e) {
+            console.log(e);
+        }
+
+
+    });
+
     socket.on('getHistory', () => {
         console.log("sending history", Object.keys(history).length)
         socket.emit('history', history);
@@ -82,8 +112,55 @@ io.on('connection', (socket) => {
     }, 1000);
 });
 
+async function runTask() {
+
+    // if queue is empty, return
+    if (promptQueue.length == 0) {
+        setTimeout(runTask, 1000);
+        return;
+    }
+    // pop from queue
+    const prompt = promptQueue.shift();
+    console.log("prompt", prompt);
+
+
+    console.log('sending prompt', prompt)
+
+    // if prompt is manual, sendQuery
+    if (prompt.type == 'manual') {
+
+        try {
+
+            let res = await sendQuery(prompt.manualInstruction, prompt.lastPrompt);
+            console.log("res", res);
+
+            res.parsedOutput = JSON.parse(res.text);
+            // add to history
+            history[prompt.tweetId].history.push(res);
+
+            // save history to file
+            await saveHistory(history);
+            console.log("history saved");
+
+            io.emit('history', history); // send to clients history changed
+        }
+        catch (e) {
+            console.log(e);
+        }
+        // socket.emit('history', history); // send to clients history changed
+
+        // send to clients history changed
+    }
+
+    // run same function every 1 second
+    setTimeout(runTask, 1000);
+}
+
+
 
 const port = 3003;
 server.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
+
+runTask();
