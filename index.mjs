@@ -32,10 +32,32 @@ const io = new Server(server, {
 const promptQueue = [];
 let isTaskRunning = false;
 
+function automaticallyAddJobsToQueue() {
+    // search through history, if there is a job that is not done, add it to queue
+    // if there is a job that is done, and there is a next job, add it to queue
+
+    // for each tweet in history
+    for (const tweetId in history) {
+        // if there is a job that is not done, add it to queue
+        const jobs = history[tweetId].jobs;
+        if (jobs) {
+            for (const job of jobs) {
+                if (!job.done) {
+                    // add to queue
+                    promptQueue.push(job);
+                }
+            }
+        }
+    }
+}
+
+// automatically add jobs to queue
+automaticallyAddJobsToQueue();
+
 io.on('connection', (socket) => {
     console.log('A client connected');
 
-    socket.on('sendManualInstruction', (message) => {
+    socket.on('sendManualInstruction', async (message) => {
         console.log('Manual instruction received', message);
         // Implement your logic to handle the custom message
 
@@ -59,6 +81,21 @@ io.on('connection', (socket) => {
             socket.emit('manualInstructionStatus', {
                 'status': 'added to queue'
             });
+
+            // add to history, as jobs this prompt queue, this could be null
+            history[tweetId].jobs = history[tweetId].jobs || [];
+            history[tweetId].jobs.push(
+                {
+                    'type': 'manual',
+                    'tweetId': tweetId,
+                    'lastPrompt': lastPrompt,
+                    'manualInstruction': manualInstruction,
+                    'done': false,
+                }
+            );
+
+            // save history to file
+            await saveHistory(history);
 
         }
         catch (e) {
@@ -139,12 +176,23 @@ io.on('connection', (socket) => {
     });
 
     // Send server status event
-    // setInterval(() => {
-    //     // Emit server status to the client
-    //     socket.emit('serverStatus', {
-    //         isTaskRunning: false, // Replace with the actual flag/variable that indicates the task status
-    //     });
-    // }, 1000);
+    setInterval(() => {
+
+        let states = {
+            'isTaskRunning': isTaskRunning,
+            'promptQueueLength': promptQueue.length,
+            'rateLimitError': rateLimitError,
+            'rateLimitTime': rateLimitTime,
+            'error': error
+        };
+
+        io.emit('serverStatus', states);
+
+        // Emit server status to the client
+        socket.emit('serverStatus', {
+            ...states // Replace with the actual flag/variable that indicates the task status
+        });
+    }, 1000);
 });
 
 var rateLimitError = false;
@@ -195,7 +243,23 @@ async function runTask() {
 
             res.parsedOutput = JSON.parse(res.text);
             // add to history
+
+            // add instruction to history, type user, data manualInstruction
+
+            history[prompt.tweetId].history.push({
+                'type': 'user',
+                'data': prompt.manualInstruction
+            });
+
             history[prompt.tweetId].history.push(res);
+
+            // search for jobs in history, and mark as done
+            history[prompt.tweetId].jobs = history[prompt.tweetId].jobs.map(job => {
+                if (job.type == 'manual' && job.manualInstruction == prompt.manualInstruction) {
+                    job.done = true;
+                }
+                return job;
+            });
 
             // save history to file
             await saveHistory(history);
@@ -213,15 +277,6 @@ async function runTask() {
                 rateLimitTime = new Date().getTime();
 
                 // send status to clients
-                let states = {
-                    'isTaskRunning': isTaskRunning,
-                    'promptQueueLength': promptQueue.length,
-                    'rateLimitError': rateLimitError,
-                    'rateLimitTime': rateLimitTime,
-                    'error': error
-                };
-
-                io.emit('serverStatus', states);
 
                 setTimeout(runTask, 1000 * 30 * 60);
                 return;
@@ -264,8 +319,17 @@ async function runTask() {
 
                 console.log(error);
 
-                if (error && typeof error != 'string' && error.statusCode == 504) {
-                    setTimeout(runTask, 1000 * 30);
+                if (error && typeof error != 'string' && error.statusCode == 502) {
+                    promptQueue.push(prompt);
+
+                    setTimeout(runTask, 1000 * 5);
+                    return;
+                }
+
+                // if string, and 'Media and text less' in error, then add prompt back to queue
+                if (error && typeof error == 'string' && error.includes('Media and text less')) {
+                    setTimeout(runTask, 100);
+                    // dont add prompt back to queue
                     return;
                 }
 
@@ -276,7 +340,9 @@ async function runTask() {
                     return;
 
                 }
-                setTimeout(runTask, 1000 * 30 * 60);
+                promptQueue.push(prompt);
+
+                setTimeout(runTask, 1000 * 5);
                 return;
             }
 
@@ -304,7 +370,7 @@ async function runTask() {
 
             console.log("error", e);
 
-            if (e.statusCode == 504) {
+            if (e.statusCode == 502) {
 
                 setTimeout(runTask, 1000 * 30);
                 // add prompt back to queue
