@@ -412,8 +412,7 @@ async function saveHistory(hist) {
         let hour = date.getHours();
         let day = date.getDate();
         let month = date.getMonth();
-        let year = date.getFullYear();
-        let backupPath = '/home/al/backups/backup_' + year + '_' + month + '_' + day + '_' + hour + '.json'
+        let backupPath = '/home/al/backups/backup_'  + month + '_' + day + '_' + hour + '.json'
         fs.writeFileSync(backupPath, historyData, 'utf8');
         console.log('JSON backup file has been saved successfully.');
     }

@@ -67,35 +67,68 @@ io.on('connection', (socket) => {
             // find the last prompt of the tweet
             const lastPrompt = history[tweetId].history[history[tweetId].history.length - 1];
             // add to queue
-            promptQueue.push({
-                'type': 'manual',
-                'tweetId': tweetId,
-                'lastPrompt': lastPrompt,
-                'manualInstruction': manualInstruction
-            })
 
-            // save promptQueue to file
-            // savePromptQueue(promptQueue);
 
-            // send status to client that it is added to queue
-            socket.emit('manualInstructionStatus', {
-                'status': 'added to queue'
-            });
+            let extra = `please only generate a revised JSON output.\nIMPORTANT: The explanation should be for the original task and not mention this step directly. DON'T WRITE FOR EXAMPLE THANK YOU FOR CLARIFYING`
+
+            // append extra to manualInstruction if it is not there
+
+            var instruction = manualInstruction
+            if (!instruction.includes(extra)) {
+                instruction = instruction + '\n' + extra;
+            }
+
+
 
             // add to history, as jobs this prompt queue, this could be null
             history[tweetId].jobs = history[tweetId].jobs || [];
-            history[tweetId].jobs.push(
-                {
+
+            // just change the instruction of the last item has job and it is not done, it is modifying the job, also remove from queue
+            if (history[tweetId].jobs.length > 0 && !history[tweetId].jobs[history[tweetId].jobs.length - 1].done) {
+
+                // change the instruction of the last item
+                history[tweetId].jobs[history[tweetId].jobs.length - 1].manualInstruction = instruction;
+                // remove from queue
+                promptQueue.map((item) => {
+                    if (item.type == 'manual' && item.tweetId == tweetId) {
+                        // change the instruction
+                        item.manualInstruction = instruction;
+                    }
+                    return item
+                });
+            } else {
+                promptQueue.push({
                     'type': 'manual',
                     'tweetId': tweetId,
                     'lastPrompt': lastPrompt,
-                    'manualInstruction': manualInstruction,
-                    'done': false,
-                }
-            );
+                    'manualInstruction': instruction
+                })
+
+                // save promptQueue to file
+                // savePromptQueue(promptQueue);
+
+                // send status to client that it is added to queue
+                socket.emit('manualInstructionStatus', {
+                    'status': 'added to queue'
+                });
+
+
+
+                history[tweetId].jobs.push(
+                    {
+                        'type': 'manual',
+                        'tweetId': tweetId,
+                        'lastPrompt': lastPrompt,
+                        'manualInstruction': instruction,
+                        'done': false,
+                    }
+                );
+            }
 
             // save history to file
             await saveHistory(history);
+            // send history to client
+            socket.emit('history', history);
 
         }
         catch (e) {
@@ -362,13 +395,13 @@ async function runTask() {
                     currentState = '24 hour limit reached, stoped task'
                     rateLimitError = true;
                     rateLimitTime = new Date().getTime();
-    
+
                     // add to queue
                     promptQueue.push(prompt);
-    
+
                     setTimeout(runTask, 1000 * 60 * 60 * 24);
                     return;
-    
+
                 }
                 console.log("error", e);
                 error = e;
