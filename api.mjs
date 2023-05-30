@@ -20,8 +20,13 @@ const api = new ChatGPTUnofficialProxyAPI({
 import labels from '/home/al/GitHub/twitter/data/propaganda/pers_labels.json'  assert { type: 'json' };
 
 // load json from data/propaganda/mult256.json
-import data from '/home/al/GitHub/twitter/data/propaganda/sample.json'  assert { type: 'json' };
+import data_1 from '/home/al/GitHub/twitter/data/propaganda/sample.json'  assert { type: 'json' };
+import data_2 from '/home/al/data/sample_2.json' assert { type: 'json' };
 
+// merge data and data_2
+let merged = data_1.concat(data_2)
+
+const data = merged
 
 let filePath = '/home/al/GitHub/twitter/data/propaganda/pers_labels.json'
 

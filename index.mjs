@@ -208,6 +208,9 @@ var rateLimitTime = 0;
 var error = null
 var currentState = 'idle'
 
+
+const twentyFourHourErr = `You've reached our limit of messages per 24 hours`
+
 async function runTask() {
 
     // first send status to clients
@@ -259,7 +262,7 @@ async function runTask() {
     currentState = 'Awaiting for response'
 
 
-    
+
 
 
     // if prompt is manual, sendQuery
@@ -300,6 +303,21 @@ async function runTask() {
             error = e;
             console.log(e);
 
+            if (e.toString().includes(twentyFourHourErr)) {
+                // limit reached, stop task
+                isTaskRunning = false;
+                currentState = '24 hour limit reached, stoped task'
+                rateLimitError = true;
+                rateLimitTime = new Date().getTime();
+
+                // add to queue
+                promptQueue.push(prompt);
+
+                setTimeout(runTask, 1000 * 60 * 60 * 24);
+                return;
+
+            }
+
             // if e.statusCode == 400, then it is rate limit error
             if (e.statusCode == 400) {
                 rateLimitError = true;
@@ -338,7 +356,20 @@ async function runTask() {
             // if not string and not null, then it is error
 
             if (e) {
-
+                if (e.toString().includes(twentyFourHourErr)) {
+                    // limit reached, stop task
+                    isTaskRunning = false;
+                    currentState = '24 hour limit reached, stoped task'
+                    rateLimitError = true;
+                    rateLimitTime = new Date().getTime();
+    
+                    // add to queue
+                    promptQueue.push(prompt);
+    
+                    setTimeout(runTask, 1000 * 60 * 60 * 24);
+                    return;
+    
+                }
                 console.log("error", e);
                 error = e;
                 rateLimitError = true;
@@ -372,12 +403,17 @@ async function runTask() {
                     // dont add prompt back to queue
                     return;
                 }
+                if (error && typeof error == 'string' && error.includes('Already done')) {
+                    setTimeout(runTask, 100);
+                    // dont add prompt back to queue
+                    return;
+                }
 
                 if ('Bad Request' == error.statusText) {
                     if (e.toString().includes('one minute')) {
                         currentState = 'Rate limit error, waiting for 1 minutes'
                         promptQueue.push(prompt);
-                   
+
                         setTimeout(runTask, 1000 * 60);
                         return;
                     }
@@ -419,7 +455,20 @@ async function runTask() {
             // io.emit('serverStatus', states);
 
             console.log("error", e);
+            if (e.toString().includes(twentyFourHourErr)) {
+                // limit reached, stop task
+                isTaskRunning = false;
+                currentState = '24 hour limit reached, stoped task'
+                rateLimitError = true;
+                rateLimitTime = new Date().getTime();
 
+                // add to queue
+                promptQueue.push(prompt);
+
+                setTimeout(runTask, 1000 * 60 * 60 * 24);
+                return;
+
+            }
             if (e.statusCode == 502 || e.statusCode == 504) {
 
                 setTimeout(runTask, 1000 * 30);
@@ -434,7 +483,7 @@ async function runTask() {
                 if (e.toString().includes('one minute')) {
                     currentState = 'Rate limit error, waiting for 1 minutes'
                     promptQueue.push(prompt);
-               
+
                     setTimeout(runTask, 1000 * 60);
                     return;
                 }
