@@ -215,6 +215,24 @@ io.on('connection', (socket) => {
         // You may need to modify your existing functions to accommodate this feature
     });
 
+    socket.on('validate', async (message) => {
+
+        const { tweetId, historyItem } = message;
+
+        // recevied Validation, set history[tweetId]'s historyItem where id is the same to the new historyItem
+        history[tweetId].history = history[tweetId].history.map(item => {
+            if (item.id == historyItem.id) {
+                return historyItem;
+            }
+            return item;
+        }
+        );
+        // save history to file
+        await saveHistory(history);
+
+    });
+
+
     // Send server status event
     setInterval(() => {
 
