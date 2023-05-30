@@ -247,6 +247,15 @@ async function runTask() {
     rateLimitError = false;
     rateLimitTime = 0;
     error = null;
+    currentState = 'Sending prompt'
+    io.emit('serverStatus', {
+        'isTaskRunning': isTaskRunning,
+        'promptQueueLength': promptQueue.length,
+        'rateLimitError': rateLimitError,
+        'rateLimitTime': rateLimitTime,
+        'error': error,
+        'currentState': currentState
+    });
     currentState = 'Awaiting for response'
 
 
@@ -381,9 +390,9 @@ async function runTask() {
 
                 }
                 promptQueue.push(prompt);
-                currentState = 'Error, waiting for 5 seconds'
+                currentState = 'Error, waiting for 60 seconds'
 
-                setTimeout(runTask, 1000 * 5);
+                setTimeout(runTask, 1000 * 60);
                 return;
             }
 
