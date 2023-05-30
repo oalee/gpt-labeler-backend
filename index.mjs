@@ -148,6 +148,9 @@ io.on('connection', (socket) => {
         // add prompts to promptQueue
         promptQueue.push(...prompts);
 
+        // send message to client that we added prompts to queue
+        socket.emit('addedSampleQueue', true);
+
     });
 
     // Stop task event
@@ -155,6 +158,10 @@ io.on('connection', (socket) => {
         // Implement your logic to stop the task
         // You can use a flag or variable to control the task execution
         isTaskRunning = false;
+        currentState = 'idle'
+        rateLimitError = false;
+        rateLimitTime = 0;
+        error = null;
     });
 
     // jsonData is history, save it to file
@@ -183,7 +190,8 @@ io.on('connection', (socket) => {
             'promptQueueLength': promptQueue.length,
             'rateLimitError': rateLimitError,
             'rateLimitTime': rateLimitTime,
-            'error': error
+            'error': error,
+            'currentState': currentState
         };
 
         io.emit('serverStatus', states);
@@ -198,23 +206,25 @@ io.on('connection', (socket) => {
 var rateLimitError = false;
 var rateLimitTime = 0;
 var error = null
+var currentState = 'idle'
 
 async function runTask() {
 
     // first send status to clients
-    let states = {
-        'isTaskRunning': isTaskRunning,
-        'promptQueueLength': promptQueue.length,
-        'rateLimitError': rateLimitError,
-        'rateLimitTime': rateLimitTime,
-        'error': error
-    };
+    // let states = {
+    //     'isTaskRunning': isTaskRunning,
+    //     'promptQueueLength': promptQueue.length,
+    //     'rateLimitError': rateLimitError,
+    //     'rateLimitTime': rateLimitTime,
+    //     'error': error
+    // };
 
-    io.emit('serverStatus', states);
+    // io.emit('serverStatus', states);
 
     // if task is not running, return
     if (!isTaskRunning) {
         setTimeout(runTask, 1000);
+
         return;
     }
 
@@ -232,6 +242,16 @@ async function runTask() {
 
 
     console.log('sending prompt', prompt)
+
+    // status sending prompt, remove error
+    rateLimitError = false;
+    rateLimitTime = 0;
+    error = null;
+    currentState = 'Awaiting for response'
+
+
+    
+
 
     // if prompt is manual, sendQuery
     if (prompt.type == 'manual') {
@@ -269,20 +289,30 @@ async function runTask() {
         }
         catch (e) {
             error = e;
+            console.log(e);
 
             // if e.statusCode == 400, then it is rate limit error
             if (e.statusCode == 400) {
                 rateLimitError = true;
                 // get time
                 rateLimitTime = new Date().getTime();
+                promptQueue.push(prompt);
 
+                currentState = 'Rate limit error, waiting for 30 minutes'
                 // send status to clients
+
+                // check if "one minute" is in string version of error
+                if (e.toString().includes('one minute')) {
+                    currentState = 'Rate limit error, waiting for 1 minutes'
+
+                    setTimeout(runTask, 1000 * 60);
+                    return;
+                }
 
                 setTimeout(runTask, 1000 * 30 * 60);
                 return;
             }
 
-            console.log(e);
 
         }
         // socket.emit('history', history); // send to clients history changed
@@ -321,6 +351,7 @@ async function runTask() {
 
                 if (error && typeof error != 'string' && error.statusCode == 502) {
                     promptQueue.push(prompt);
+                    currentState = 'Error, waiting for 5 minutes'
 
                     setTimeout(runTask, 1000 * 5);
                     return;
@@ -334,13 +365,23 @@ async function runTask() {
                 }
 
                 if ('Bad Request' == error.statusText) {
+                    if (e.toString().includes('one minute')) {
+                        currentState = 'Rate limit error, waiting for 1 minutes'
+                        promptQueue.push(prompt);
+                   
+                        setTimeout(runTask, 1000 * 60);
+                        return;
+                    }
                     setTimeout(runTask, 1000 * 30 * 60);
                     // add prompt back to queue
+                    currentState = 'Error, waiting for 30 minutes'
+
                     promptQueue.push(prompt);
                     return;
 
                 }
                 promptQueue.push(prompt);
+                currentState = 'Error, waiting for 5 seconds'
 
                 setTimeout(runTask, 1000 * 5);
                 return;
@@ -358,29 +399,39 @@ async function runTask() {
         }
         catch (e) {
 
-            let states = {
-                'isTaskRunning': isTaskRunning,
-                'promptQueueLength': promptQueue.length,
-                'rateLimitError': rateLimitError,
-                'rateLimitTime': new Date().getTime(),
-                'error': e
-            };
-            // send to clients history changed
-            io.emit('serverStatus', states);
+            // let states = {
+            //     'isTaskRunning': isTaskRunning,
+            //     'promptQueueLength': promptQueue.length,
+            //     'rateLimitError': rateLimitError,
+            //     'rateLimitTime': new Date().getTime(),
+            //     'error': e
+            // };
+            // // send to clients history changed
+            // io.emit('serverStatus', states);
 
             console.log("error", e);
 
-            if (e.statusCode == 502) {
+            if (e.statusCode == 502 || e.statusCode == 504) {
 
                 setTimeout(runTask, 1000 * 30);
+                currentState = 'Error, waiting for 30 seconds'
+
                 // add prompt back to queue
                 promptQueue.push(prompt);
                 return;
             }
 
             if (e.statusText && 'Bad Request' == e.statusText) {
-
+                if (e.toString().includes('one minute')) {
+                    currentState = 'Rate limit error, waiting for 1 minutes'
+                    promptQueue.push(prompt);
+               
+                    setTimeout(runTask, 1000 * 60);
+                    return;
+                }
                 setTimeout(runTask, 1000 * 60 * 30);
+                currentState = 'Error, waiting for 30 minutes'
+
                 // add prompt back to queue
                 promptQueue.push(prompt);
                 return;
@@ -391,6 +442,9 @@ async function runTask() {
 
 
     }
+
+    currentState = 'Done! going to next prompt'
+
 
     setTimeout(runTask, 1000);
 

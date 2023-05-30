@@ -398,6 +398,23 @@ async function saveHistory(hist) {
     catch (err) {
         console.error('An error occurred while saving the JSON file:', err);
     }
+
+    // save every hour date format to hour
+
+    // let backupPath = '/home/al/backups/backup_' + Date.now() + '.json'
+    try {
+        let date = new Date();
+        let hour = date.getHours();
+        let day = date.getDate();
+        let month = date.getMonth();
+        let year = date.getFullYear();
+        let backupPath = '/home/al/backups/backup_' + year + '_' + month + '_' + day + '_' + hour + '.json'
+        fs.writeFileSync(backupPath, historyData, 'utf8');
+        console.log('JSON backup file has been saved successfully.');
+    }
+    catch (err) {
+        console.error('An error occurred while saving the JSON file:', err);
+    }
 }
 
 // check if history has item.id key
