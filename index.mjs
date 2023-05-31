@@ -3,6 +3,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import bodyParser from 'body-parser';
 
+import { v4 as uuidv4 } from 'uuid';
+
 
 const app = express();
 const server = http.createServer(app);
@@ -186,6 +188,34 @@ io.on('connection', (socket) => {
 
     });
 
+    socket.on('sendManualCorrection', async (message) => {
+        console.log('Manual correction received', message);
+
+        try {
+            const { tweetId, manualCorrection } = message;
+
+            // add to history
+            const newItem = {
+                'parsedOutput': manualCorrection,
+                'type': 'manualCorrection',
+                'id': uuidv4(),
+            }
+            history[tweetId].history.push(newItem);
+
+            // save history to file
+            await saveHistory(history);
+
+            // send history to client
+            socket.emit('history', history);
+
+        }
+        catch (e) {
+            console.log(e);
+        }
+
+    });
+
+
     // Stop task event
     socket.on('stopTask', () => {
         // Implement your logic to stop the task
@@ -262,6 +292,8 @@ var currentState = 'idle'
 
 const twentyFourHourErr = `You've reached our limit of messages per 24 hours`
 
+var isTaskInProcess = false;
+
 async function runTask() {
 
     // first send status to clients
@@ -290,6 +322,7 @@ async function runTask() {
         setTimeout(runTask, 1000);
         return;
     }
+
     // pop last prompt
     const prompt = promptQueue.pop();
     // console.log("prompt", prompt);
@@ -555,7 +588,7 @@ async function runTask() {
     currentState = 'Done! going to next prompt'
 
 
-    setTimeout(runTask, 1000);
+    setTimeout(runTask, 2000);
 
 }
 
