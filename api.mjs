@@ -97,6 +97,7 @@ Offensive language is often tweaked on social media platforms to circumvent cont
 کوروش زمان (Cyrus of our time) addresses Reza Pahlavi. This contains propaganda technique of Slogan, Appeal_to_Values, Appeal_to_Time, Appeal_to_Authority by connecting him to Cyrus the Great. 
 جاوید شاه (Eternal King) is a slogan that addresses and Prince Reza Pahlavi. This phrase contains propaganda technique of Slogan, Appeal_to_Values, Appeal_to_Authority by connecting him to ancient Persian kings.
 Yasamin Pahlavi is the wife of Prince Reza Pahlavi.
+Maryam Rajavi is the leader of MEK. MEK is precived negatively by the public.
 
 Task Description: Your task is to analyze tweets to uncover propaganda around women.life.freedom movement. Your goal is to discover the techniques used around the movement, pinpoint the positive and negative targets of the tweet (the entities the tweet aims to support or undermine) and define the objectives of the tweet. 
 
@@ -112,29 +113,51 @@ Identify the Targets: Your third task is identifying the positive_target(s) and 
 Uncover the Objectives: Lastly, elucidate the objectives of the tweet. These objectives could be the desired reactions, feelings, or actions the tweeter wants to incite in the audience.
 
 Technique Labeling: During your analysis, assign suitable labels to the identified techniques from the following list:
-Appeal_to_Authority
-Appeal_to_Popularity
-Appeal_to_Values
-Appeal_to_Fear-Prejudice
-Flag_Waving
-Causal_Oversimplification
-False_Dilemma-No_Choice
-Consequential_Oversimplification
-Straw_Man
-Red_Herring
-Whataboutism
-Slogans
-Appeal_to_Time
-Conversation_Killer
-Loaded_Language
-Repetition
-Exaggeration-minimization
-Obfuscation-Vagueness-Confusion
-Name_Calling-Labeling
-Doubt
-Guilt_by_Association
-Appeal_to_Hypocrisy
-Questioning_the_Reputation
+Appeal_to_Authority: Asserting a claim is true simply because a valid authority or expert on the issue has said it. This could include cases where the referenced authority is not actually an expert.
+
+Appeal_to_Popularity (also known as Bandwagon): aka  Attempting to persuade the audience to join in and take a course of action because "everyone else is doing it."
+
+Appeal_to_Values (also known as Glittering Generalities): Using words or symbols from the target audience's value system to produce a positive image when associated with a person or idea.
+
+Appeal_to_Fear-Prejudice: Seeking to build support for an idea by instilling fear, anxiety, and/or panic in the population towards an alternative, possibly based on preconceived judgments.
+
+Flag_Waving: Exploiting patriotic sentiments or the strong feelings associated with a group to justify or promote an action or idea.
+
+Causal_Oversimplification: Assuming a single cause when there are actually multiple causes for an issue, and oversimplifying complex issues by blaming a single person or group.
+
+False_Dilemma-No_Choice (also known as Black-and-White Fallacy, Dictatorship): Presenting only two options as the only possibilities when in fact more possibilities exist.
+
+Consequential_Oversimplification: Not provided in the original text, but might refer to simplifying the consequences of actions or events by focusing on one possible outcome while ignoring others.
+
+Straw_Man: Misrepresenting an opponent's position, simplifying it or twisting it, then arguing against this distorted version instead of the original one.
+
+Red_Herring: Introducing irrelevant material to divert attention away from the original argument or issue.
+
+Whataboutism: Discrediting an opponent's position by charging them with hypocrisy without directly refuting their argument, often by bringing up a different issue as a diversion.
+
+Slogans: Using a brief and catchy phrase that encapsulates a position or a call to action, often loaded with emotion and offering oversimplified solutions to complex issues.
+
+Appeal_to_Time: Using an argument that something is right or good because it's old (appeal to tradition) or because it's new or modern (appeal to novelty).
+
+Conversation_Killer (also known as Thought-Terminating Cliché): Using phrases that aim to end the discussion by discouraging critical thought and meaningful conversation.
+
+Loaded_Language: Using words and phrases with strong emotional implications to influence the audience.
+
+Repetition: Repeating the same message again and again so that the audience will eventually accept it.
+
+Exaggeration-minimization: Representing something in an excessive or lesser manner than it actually is, such as making things look bigger, better, or worse, or making them seem less important.
+
+Obfuscation-Vagueness-Confusion: Using intentionally unclear or ambiguous words, leading the audience to their own interpretations which may not align with the original meaning.
+
+Name_Calling-Labeling: Attaching negative or positive labels to a person, group, idea, etc. to influence the audience's perception of them.
+
+Doubt: Questioning the credibility of someone or something, usually with the aim of undermining it.
+
+Guilt_by_Association: Associating a person or idea with something the audience perceives negatively to discredit them.
+
+Appeal_to_Hypocrisy (also known as Tu Quoque): Responding to criticism by accusing the critic of similar or identical wrongdoing, instead of addressing the criticism itself.
+
+Questioning_the_Reputation: Attacking the character, motive, or other attribute of the person making the argument or persons associated with the argument, rather than attacking the argument itself.
 
 
 Input:
