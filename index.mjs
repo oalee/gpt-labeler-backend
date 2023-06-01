@@ -199,6 +199,7 @@ io.on('connection', (socket) => {
                 'parsedOutput': manualCorrection,
                 'type': 'manualCorrection',
                 'id': uuidv4(),
+                'isValidated': true,
             }
             history[tweetId].history.push(newItem);
 

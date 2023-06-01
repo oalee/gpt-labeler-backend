@@ -15,18 +15,40 @@ const api = new ChatGPTUnofficialProxyAPI({
     apiReverseProxyUrl: 'https://api.pawan.krd/backend-api/conversation'
 })
 
+async function processLineByLine() {
+    const fileStream = fs.createReadStream('/home/al/GitHub/twitter/data/propaganda/lsample.json');
+
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
+
+    let data = [];
+
+    for await (const line of rl) {
+        // Each line in the input.txt will be successively available here as `line`.
+        data.push(JSON.parse(line));
+    }
+
+    return data;
+}
 
 
 import labels from '/home/al/GitHub/twitter/data/propaganda/pers_labels.json'  assert { type: 'json' };
 
 // load json from data/propaganda/mult256.json
 import data_1 from '/home/al/GitHub/twitter/data/propaganda/sample.json'  assert { type: 'json' };
-import data_2 from '/home/al/data/sample_2.json' assert { type: 'json' };
+// import data_2 from '/home/al/data/sample_2.json' assert { type: 'json' };
+
+let data_2 = await processLineByLine()
 
 // merge data and data_2
 let merged = data_1.concat(data_2)
 
 const data = merged
+
+
+
 
 let filePath = '/home/al/GitHub/twitter/data/propaganda/pers_labels.json'
 
@@ -34,8 +56,11 @@ let historyPath = '/home/al/GitHub/twitter/data/propaganda/pers_labels_history.j
 
 
 let revaluatePrompt = `
-Please conduct a thorough review of your previous output. Consider the following key review questions in your assessment:
+Please first do a comprehensive analysis of the task, the labels, explanations and conduct a thorough review of your previous output. Consider the following key review questions in your assessment:
 
+- Is there other propaganda techniques that are not identified in the previous output? 
+- Are there biases in the previous output? 
+- Are the all techniques and targets identified correctly? If not, please correct it.
 - Is the negative sentiment towards the Islamic Republic?
 - Is there a negative or positive connotations for a (political) ideology, such as right-wing, left-wing, nationalism or religious? Is this included in the explanation and positive or negative target? 
 - Does the content reflect everyday life?
@@ -45,10 +70,11 @@ Please conduct a thorough review of your previous output. Consider the following
 - Is the explanation in the json i.e., reasoning behind the identified positive and negative targets and the techniques are clear, comprehensive and presented in the explanation? If not, please elaborate and include them in the explanation.
 - Is there the identified positive target clearly explained in the explanation? Please do not include any positive target that is loosely inferred or not clearly explained in the explanation.
 - Does the text contains positive connotation toward Women.Life.Freedom movement? if so, is it included in the positive target and explained in the explanation. For example, calls for justice, and indications of peoples's freedom of choice, such as the right to choose their own clothing, dancing and pro LGBTQ statements are positive connotations among others.
+- Does the tweet undermines the women.life.freedom movement? If so, is this explained in the explanation?
 
 After your evaluation, please generate a revised JSON output if there are any errors or inaccuracies in your previous response. 
 IMPORTANT: The explanation should be for the original task and not mention the above review questions.
-IMPORTANT: DO NOT MENITON THE ABOVE REVIEW QUESTIONS IN YOUR EXPLANATION.
+IMPORTANT: DO NOT MENTION THE ABOVE REVIEW QUESTIONS IN YOUR EXPLANATION. ONLY OUTPUT A JSON WITHOUT ANY ADDITIONAL TEXT.
 `
 
 var instruction = `
@@ -62,7 +88,15 @@ Since the death of Mahsa Amini, a "Women.Life.Freedom" movement began in Iran to
 The Women.Life.Freedom movement is a social movement focused on advocating for women's rights, equality, and freedom. It emerged as a response to various forms of oppression and discrimination faced by women in different societies worldwide. The movement aims to challenge patriarchal norms, fight against gender-based violence, and strive for equal opportunities and choices for women in all aspects of life.
 
 Women.Life.Freedom recognizes that women's experiences and struggles are diverse, and shaped by factors such as culture, religion, socio-economic status, and political systems. It seeks to create a platform where women can share their stories, amplify their voices, and mobilize collective action toward achieving gender equality and dismantling systemic barriers.
-Offensive language is often tweaked on social media platforms to circumvent content detection systems. For instance, "Qنی," equivalent to "کونی" in Persian, is a derogatory term with negative connotations towards homosexuality. Terms such as "اسی" is derogatorily used for Hamed Esmailioun. Moreover, "مسی" and "عنینژاد," "قمیلکا" is a derogatory language used to mock "مسیح علینژاد" Masih Alinejad. Hamed Esmalition, Masih Alinejad, and Reza Pahlavi are known opposition figures of the Islamic Republic.
+Offensive language is often tweaked on social media platforms to circumvent content detection systems. For instance, "Qنی," equivalent to "کونی" in Persian, is a derogatory term with negative connotations towards homosexuality. Terms such as "اسی" is derogatorily used for Hamed Esmailioun. Moreover, "مسی" and "عنینژاد," "قمیلکا" is a derogatory language used to mock "مسیح علینژاد" Masih Alinejad. Hamed Esmalition, Masih Alinejad, and Reza Pahlavi are known opposition figures of the Islamic Republic. 
+
+ملا addresses to Mullahs (Islamic Republic).
+چپی addresses to Leftists.
+مجاهد addresses to (MEK) سازمان مجاهدين خلق ايران. 
+مرگ (یا ننگ) بر سه فاسد ملا چپی مجاهد (Death or shame to three corrupt groups, Mullahs, Leftists, and MEK) contains propaganda technique of Slogan, Loaded_Language (by using Death or Shame) and Guilt_by_Association against Leftists by associating them with Mullahs and MEK which are both hated by the public.
+کوروش زمان (Cyrus of our time) addresses Reza Pahlavi. This contains propaganda technique of Slogan, Appeal_to_Values, Appeal_to_Time, Appeal_to_Authority by connecting him to Cyrus the Great. 
+جاوید شاه (Eternal King) is a slogan that addresses and Prince Reza Pahlavi. This phrase contains propaganda technique of Slogan, Appeal_to_Values, Appeal_to_Authority by connecting him to ancient Persian kings.
+Yasamin Pahlavi is the wife of Prince Reza Pahlavi.
 
 Task Description: Your task is to analyze tweets to uncover propaganda around women.life.freedom movement. Your goal is to discover the techniques used around the movement, pinpoint the positive and negative targets of the tweet (the entities the tweet aims to support or undermine) and define the objectives of the tweet. 
 
@@ -412,7 +446,7 @@ async function saveHistory(hist) {
         let hour = date.getHours();
         let day = date.getDate();
         let month = date.getMonth();
-        let backupPath = '/home/al/backups/backup_'  + month + '_' + day + '_' + hour + '.json'
+        let backupPath = '/home/al/backups/backup_' + month + '_' + day + '_' + hour + '.json'
         fs.writeFileSync(backupPath, historyData, 'utf8');
         console.log('JSON backup file has been saved successfully.');
     }
