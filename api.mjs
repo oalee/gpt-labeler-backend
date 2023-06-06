@@ -45,7 +45,10 @@ let data_2 = await processLineByLine()
 // merge data and data_2
 let merged = data_1.concat(data_2)
 
-const data = merged
+// drop duplicate on id and rawContent, this is a dictionary
+let unique = merged.filter((v, i, a) => a.findIndex(t => (t.id === v.id && t.rawContent === v.rawContent)) === i)
+
+const data = unique
 
 
 
@@ -60,15 +63,15 @@ Please first do a comprehensive analysis of the task, the labels, explanations a
 
 - Is there other propaganda techniques that are not identified in the previous output? 
 - Are there biases in the previous output? 
-- Are the all techniques and targets identified correctly? If not, please correct it.
+- Are the all techniques and targets identified correctly and comprehensively explained.
 - Is the negative sentiment towards the Islamic Republic?
 - Is there a negative or positive connotations for a (political) ideology, such as right-wing, left-wing, nationalism or religious? Is this included in the explanation and positive or negative target? 
 - Does the content reflect everyday life?
 - Who are the subjects of negative and positive sentiment?
 - Are these sentiments directed towards individuals or groups?
-- Is the objective clearly defined?
+- Is the objective clearly defined and explained?
 - Is the explanation in the json i.e., reasoning behind the identified positive and negative targets and the techniques are clear, comprehensive and presented in the explanation? If not, please elaborate and include them in the explanation.
-- Is there the identified positive target clearly explained in the explanation? Please do not include any positive target that is loosely inferred or not clearly explained in the explanation.
+- Is the the identified positive target clearly explained in the explanation? Please do not include any positive target that is loosely inferred or not clearly explained in the explanation.
 - Does the text contains positive connotation toward Women.Life.Freedom movement? if so, is it included in the positive target and explained in the explanation. For example, calls for justice, and indications of peoples's freedom of choice, such as the right to choose their own clothing, dancing and pro LGBTQ statements are positive connotations among others.
 - Does the tweet undermines the women.life.freedom movement? If so, is this explained in the explanation?
 
@@ -98,6 +101,10 @@ Offensive language is often tweaked on social media platforms to circumvent cont
 جاوید شاه (Eternal King) is a slogan that addresses and Prince Reza Pahlavi. This phrase contains propaganda technique of Slogan, Appeal_to_Values, Appeal_to_Authority by connecting him to ancient Persian kings.
 Yasamin Pahlavi is the wife of Prince Reza Pahlavi.
 Maryam Rajavi is the leader of MEK. MEK is precived negatively by the public.
+ج.ا is an abbreviation for جمهوری اسلامی (Islamic Republic).
+ار پی is an abbreviation for Reza Pahlavi.
+معصومه علی نژاد and قمیلکا and مصی and عنی نژاد and other combinations of such language is a derogatory language used to mock Masih Alinejad.
+اسی is a derogatory term for Hamed Esmailioun.
 
 Task Description: Your task is to analyze tweets to uncover propaganda around women.life.freedom movement. Your goal is to discover the techniques used around the movement, pinpoint the positive and negative targets of the tweet (the entities the tweet aims to support or undermine) and define the objectives of the tweet. 
 

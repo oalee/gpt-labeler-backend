@@ -502,9 +502,9 @@ async function runTask() {
                         setTimeout(runTask, 1000 * 60);
                         return;
                     }
-                    setTimeout(runTask, 1000 * 30 * 60);
+                    setTimeout(runTask, 1000 * 60 * 60);
                     // add prompt back to queue
-                    currentState = 'Error, waiting for 30 minutes'
+                    currentState = 'Error, waiting for 60 minutes'
 
                     promptQueue.push(prompt);
                     return;
@@ -572,8 +572,8 @@ async function runTask() {
                     setTimeout(runTask, 1000 * 60);
                     return;
                 }
-                setTimeout(runTask, 1000 * 60 * 30);
-                currentState = 'Error, waiting for 30 minutes'
+                setTimeout(runTask, 1000 * 60 * 60);
+                currentState = 'Error, waiting for 60 minutes'
 
                 // add prompt back to queue
                 promptQueue.push(prompt);
